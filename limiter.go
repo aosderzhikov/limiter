@@ -54,3 +54,7 @@ func (l *Limiter) Do(ctx context.Context, f func() error) error {
 func (l *Limiter) Allowed(ctx context.Context) (bool, error) {
 	return l.storage.Allowed(ctx)
 }
+
+func (l *Limiter) Increment(ctx context.Context) error {
+	return l.storage.Increment(ctx)
+}
