@@ -10,13 +10,16 @@ func double(d int) int {
 }
 
 func TestDoLimitExceed(t *testing.T) {
-	inmem := NewInmemoryStorage(3, 3*time.Second)
-	l := NewLimiter(inmem)
+	t.Parallel()
+
+	defDriver := DefaultCounterStorage(3, 1*time.Second)
+	l := NewLimiter(defDriver)
 
 	var err error
 	for i := range 4 {
-		err = l.Do(nil, func() {
+		err = l.Do(nil, func() error {
 			_ = double(i)
+			return nil
 		})
 	}
 	if err == nil {
@@ -24,16 +27,19 @@ func TestDoLimitExceed(t *testing.T) {
 	}
 }
 
-func TestDoNotLimitExceed(t *testing.T) {
-	inmem := NewInmemoryStorage(3, 1*time.Second)
-	l := NewLimiter(inmem)
+func TestDoNoLimitExceed(t *testing.T) {
+	t.Parallel()
+
+	defDriver := DefaultCounterStorage(3, 1*time.Second)
+	l := NewLimiter(defDriver)
 
 	var err error
 	for i := range 4 {
-		err = l.Do(nil, func() {
+		err = l.Do(nil, func() error {
 			_ = double(i)
+			return nil
 		})
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(350 * time.Millisecond)
 	}
 	if err != nil {
 		t.Error("got rate limit error, but didnt want")
