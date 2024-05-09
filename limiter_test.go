@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -8,6 +9,11 @@ import (
 func double(d int) int {
 	return d * 2
 }
+
+var (
+	errExpectErr    error = errors.New("got nil rate limit error, but wanted")
+	errNotExpectErr error = errors.New("got rate limit error, but didnt want")
+)
 
 func TestDoLimitExceed(t *testing.T) {
 	t.Parallel()
@@ -23,7 +29,7 @@ func TestDoLimitExceed(t *testing.T) {
 		})
 	}
 	if err == nil {
-		t.Error("got nil rate limit error, but wanted")
+		t.Error(errExpectErr)
 	}
 }
 
@@ -42,6 +48,35 @@ func TestDoNoLimitExceed(t *testing.T) {
 		time.Sleep(350 * time.Millisecond)
 	}
 	if err != nil {
-		t.Error("got rate limit error, but didnt want")
+		t.Error(errNotExpectErr)
+	}
+}
+
+func TestComplexDo(t *testing.T) {
+	t.Parallel()
+
+	defDriver := DefaultCounterStorage(2, 100*time.Millisecond)
+	l := NewLimiter(defDriver)
+
+	var err error
+	for i := range 3 {
+		err = l.Do(nil, func() error {
+			_ = double(i)
+			return nil
+		})
+	}
+	if err == nil {
+		t.Error(errExpectErr)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	err = l.Do(nil, func() error {
+		_ = double(1)
+		return nil
+	})
+
+	if err != nil {
+		t.Error(errNotExpectErr)
 	}
 }

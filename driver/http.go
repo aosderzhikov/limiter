@@ -43,8 +43,13 @@ type HTTPStorage struct {
 
 var ErrCounterGet = errors.New("cannot get counter from storage")
 
+const (
+	counterEndpoint = "counter"
+	refreshEndpoint = "refresh"
+)
+
 func (h *HTTPStorage) Increment(ctx context.Context) error {
-	path := h.addr + "counter"
+	path := h.addr + counterEndpoint
 	counter, err := h.getCounter(ctx)
 	if err != nil {
 		return errors.Join(ErrCounterGet, err)
@@ -82,7 +87,7 @@ func (h *HTTPStorage) Allowed(ctx context.Context) (bool, error) {
 
 func (h *HTTPStorage) Refresh(ctx context.Context) error {
 	time.Sleep(h.interval)
-	path := h.addr + "refresh"
+	path := h.addr + refreshEndpoint
 	_, err := h.doRequest(ctx, path, http.MethodPost)
 	if err != nil {
 		return err
@@ -92,7 +97,7 @@ func (h *HTTPStorage) Refresh(ctx context.Context) error {
 }
 
 func (h *HTTPStorage) getCounter(ctx context.Context) (int, error) {
-	path := h.addr + "counter"
+	path := h.addr + counterEndpoint
 
 	b, err := h.doRequest(ctx, path, http.MethodGet)
 	if err != nil {
